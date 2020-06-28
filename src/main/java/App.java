@@ -1,3 +1,5 @@
+import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.List;
 
 /*
@@ -14,7 +16,72 @@ public class App {
 
     public String bestCharge(List<String> inputs) {
         //TODO: write code here
+        double totalPrice = 0d;
+        String finalstr = "";
+        List<Item> itemList = itemRepository.findAll();
 
-        return null;
+        List<SalesPromotion> salesPromotions = salesPromotionRepository.findAll();
+        DecimalFormat decimalFormat = new DecimalFormat("###################.###########");
+//    1.输出价格
+        finalstr += "============= Order details =============\n";
+        for (int i = 0; i <inputs.size() ; i++) {
+            String str = inputs.get(i).trim();
+            String[] arr = str.split("x");
+            Integer count = Integer.valueOf(arr[1].trim());
+            double price = 0d;
+            for (int j = 0; j < itemList.size(); j++) {
+                String itemName = arr[0].trim();
+                String itemListName = itemList.get(j).getId();
+                if(itemName.equals(itemListName)){
+                    price = count*itemList.get(j).getPrice();
+                    finalstr += itemList.get(j).getName()+" x"+ arr[1]
+                            +" = " + decimalFormat.format(price) +" yuan\n";
+                }
+            }
+            totalPrice += price;
+        }
+        finalstr += "-----------------------------------\n";
+//        2.是否有优惠活动
+        double savingIn30 = 0;
+        double savingInHalf = 0;
+        if (totalPrice>=30){
+            savingIn30 = 6;
+        }
+        List<String> relatedItems = salesPromotions.get(1).getRelatedItems();
+        for (int i = 0; i <inputs.size() ; i++) {
+            String str = inputs.get(i).trim();
+            String[] arr = str.split("x");
+            Integer count = Integer.valueOf(arr[1].trim());
+            double price = 0d;
+            for (int j = 0; j < itemList.size(); j++) {
+                String itemName = arr[0].trim();
+                String itemListName = itemList.get(j).getId();
+                if(itemName.equals(itemListName)){
+                    price = 0;
+                    if(itemName.equals(relatedItems.get(0))){
+                        price = count * 18 *0.5 ;
+                    }else if(itemName.equals(relatedItems.get(1))){
+                        price = count * 8 *0.5 ;
+                    }
+                    savingInHalf += price;
+                }
+            }
+        }
+        if(savingIn30<savingInHalf){
+            finalstr += "Promotion used:\n" +
+                    "Half price for certain dishes (Braised chicken，Cold noodles)，saving "+decimalFormat.format(savingInHalf)+" yuan\n" +
+                    "-----------------------------------\n";
+            totalPrice -= savingInHalf;
+        }
+        if (savingIn30>savingInHalf){
+            finalstr += "Promotion used:\n" +
+                    "满30减6 yuan，saving "+decimalFormat.format(savingIn30)+" yuan\n" +
+                    "-----------------------------------\n";
+            totalPrice -= savingIn30;
+        }
+//        3.总价
+        finalstr += "Total："+decimalFormat.format(totalPrice)+" yuan\n" +
+                "===================================";
+        return finalstr;
     }
 }
